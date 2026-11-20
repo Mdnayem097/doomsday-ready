@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import { getMovies, createMovie, updateMovie } from '../api.js';
 import ErrorMessage from '../components/ErrorMessage.jsx';
+import SuccessMessage from '../components/SuccessMessage.jsx';
+import LoadingSpinner from '../components/LoadingSpinner.jsx';
 
 export default function MoviesPage() {
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
 
   // New movie form state
   const [formData, setFormData] = useState({
@@ -41,17 +44,41 @@ export default function MoviesPage() {
     fetchMovieList();
   }, []);
 
-  // Handle Add Movie
+  // Handle Add Movie with client-side validation
   const handleCreateSubmit = async (e) => {
     e.preventDefault();
     setFormError(null);
+    setSuccessMessage(null);
+
+    const title = formData.title.trim();
+    if (!title) {
+      setFormError({ message: 'Movie title is required.' });
+      return;
+    }
+
+    const yearNum = Number(formData.releaseYear);
+    if (!Number.isInteger(yearNum) || yearNum < 1888 || yearNum > 2100) {
+      setFormError({
+        message: 'Release year must be an integer between 1888 and 2100.',
+      });
+      return;
+    }
+
+    const runtimeNum = Number(formData.runtime);
+    if (!Number.isInteger(runtimeNum) || runtimeNum < 1 || runtimeNum > 300) {
+      setFormError({
+        message: 'Runtime must be an integer between 1 and 300 minutes.',
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
       await createMovie({
-        title: formData.title.trim(),
-        releaseYear: Number(formData.releaseYear),
-        runtime: Number(formData.runtime),
+        title,
+        releaseYear: yearNum,
+        runtime: runtimeNum,
         prerequisites: formData.prerequisites,
       });
 
@@ -62,6 +89,7 @@ export default function MoviesPage() {
         runtime: 120,
         prerequisites: [],
       });
+      setSuccessMessage(`Movie "${title}" added successfully!`);
       await fetchMovieList();
     } catch (err) {
       setFormError(err);
@@ -82,6 +110,9 @@ export default function MoviesPage() {
 
     try {
       await updateMovie(movie._id, { watched: updatedWatched });
+      setSuccessMessage(
+        `"${movie.title}" marked as ${updatedWatched ? 'watched' : 'unwatched'}.`
+      );
     } catch (err) {
       // Revert if error
       setMovies((prev) =>
@@ -113,7 +144,11 @@ export default function MoviesPage() {
       await updateMovie(editingMovie._id, {
         prerequisites: selectedPrereqs,
       });
+      const updatedTitle = editingMovie.title;
       setEditingMovie(null);
+      setSuccessMessage(
+        `Prerequisites for "${updatedTitle}" updated successfully!`
+      );
       await fetchMovieList();
     } catch (err) {
       setEditError(err);
@@ -134,6 +169,10 @@ export default function MoviesPage() {
         </p>
       </div>
 
+      <SuccessMessage
+        message={successMessage}
+        onClose={() => setSuccessMessage(null)}
+      />
       <ErrorMessage error={fetchError} onClose={() => setFetchError(null)} />
 
       <div className="movies-layout">
@@ -164,7 +203,7 @@ export default function MoviesPage() {
                   id="release-year"
                   type="number"
                   required
-                  min="1900"
+                  min="1888"
                   max="2100"
                   value={formData.releaseYear}
                   onChange={(e) =>
@@ -243,10 +282,19 @@ export default function MoviesPage() {
           </div>
 
           {loading ? (
-            <div className="loading-state">Loading movies...</div>
+            <div className="loading-state">
+              <LoadingSpinner text="Loading movies..." />
+            </div>
           ) : movies.length === 0 ? (
             <div className="empty-state">
-              No movies added yet. Add your first movie above!
+              <div className="empty-state-icon">🎬</div>
+              <div className="empty-state-title">
+                No movies yet. Add your first one.
+              </div>
+              <p className="empty-state-desc">
+                Use the form on the left to add movies and configure
+                prerequisite chains.
+              </p>
             </div>
           ) : (
             <div className="movies-grid">
