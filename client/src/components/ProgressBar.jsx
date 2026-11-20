@@ -1,5 +1,3 @@
-import React from 'react';
-
 export default function ProgressBar({ watchedCount, totalCount }) {
   const percentage =
     totalCount > 0 ? Math.round((watchedCount / totalCount) * 100) : 0;
@@ -8,7 +6,8 @@ export default function ProgressBar({ watchedCount, totalCount }) {
     <div className="progress-container">
       <div className="progress-label">
         <span className="progress-text">
-          <strong>{watchedCount}</strong> of <strong>{totalCount}</strong> watched
+          <strong>{watchedCount}</strong> of <strong>{totalCount}</strong>{' '}
+          watched
         </span>
         <span className="progress-pct">{percentage}%</span>
       </div>

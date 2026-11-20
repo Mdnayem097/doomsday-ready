@@ -5,18 +5,76 @@ import { detectCycle, getRewatchOrder } from '../src/services/rewatchOrder.js';
 describe('Feature 1: Rewatch Order & Cycle Detection Service', () => {
   // Canonical 8 Sample MCU Movies
   const sampleMcuMovies = [
-    { _id: 'iron-man', title: 'Iron Man', releaseYear: 2008, runtime: 126, watched: false, prerequisites: [] },
-    { _id: 'first-avenger', title: 'Captain America: The First Avenger', releaseYear: 2011, runtime: 124, watched: false, prerequisites: [] },
-    { _id: 'the-avengers', title: 'The Avengers', releaseYear: 2012, runtime: 143, watched: false, prerequisites: ['iron-man', 'first-avenger'] },
-    { _id: 'civil-war', title: 'Captain America: Civil War', releaseYear: 2016, runtime: 147, watched: false, prerequisites: ['the-avengers'] },
-    { _id: 'ragnarok', title: 'Thor: Ragnarok', releaseYear: 2017, runtime: 130, watched: false, prerequisites: [] },
-    { _id: 'infinity-war', title: 'Avengers: Infinity War', releaseYear: 2018, runtime: 149, watched: false, prerequisites: ['civil-war', 'ragnarok'] },
-    { _id: 'endgame', title: 'Avengers: Endgame', releaseYear: 2019, runtime: 181, watched: false, prerequisites: ['infinity-war'] },
-    { _id: 'doomsday', title: 'Avengers: Doomsday', releaseYear: 2026, runtime: 180, watched: false, prerequisites: ['endgame'] },
+    {
+      _id: 'iron-man',
+      title: 'Iron Man',
+      releaseYear: 2008,
+      runtime: 126,
+      watched: false,
+      prerequisites: [],
+    },
+    {
+      _id: 'first-avenger',
+      title: 'Captain America: The First Avenger',
+      releaseYear: 2011,
+      runtime: 124,
+      watched: false,
+      prerequisites: [],
+    },
+    {
+      _id: 'the-avengers',
+      title: 'The Avengers',
+      releaseYear: 2012,
+      runtime: 143,
+      watched: false,
+      prerequisites: ['iron-man', 'first-avenger'],
+    },
+    {
+      _id: 'civil-war',
+      title: 'Captain America: Civil War',
+      releaseYear: 2016,
+      runtime: 147,
+      watched: false,
+      prerequisites: ['the-avengers'],
+    },
+    {
+      _id: 'ragnarok',
+      title: 'Thor: Ragnarok',
+      releaseYear: 2017,
+      runtime: 130,
+      watched: false,
+      prerequisites: [],
+    },
+    {
+      _id: 'infinity-war',
+      title: 'Avengers: Infinity War',
+      releaseYear: 2018,
+      runtime: 149,
+      watched: false,
+      prerequisites: ['civil-war', 'ragnarok'],
+    },
+    {
+      _id: 'endgame',
+      title: 'Avengers: Endgame',
+      releaseYear: 2019,
+      runtime: 181,
+      watched: false,
+      prerequisites: ['infinity-war'],
+    },
+    {
+      _id: 'doomsday',
+      title: 'Avengers: Doomsday',
+      releaseYear: 2026,
+      runtime: 180,
+      watched: false,
+      prerequisites: ['endgame'],
+    },
   ];
 
   const mcuMap = new Map(sampleMcuMovies.map((m) => [m._id, m]));
-  const prereqMap = new Map(sampleMcuMovies.map((m) => [m._id, m.prerequisites]));
+  const prereqMap = new Map(
+    sampleMcuMovies.map((m) => [m._id, m.prerequisites])
+  );
 
   describe('Rewatch Order Calculations', () => {
     it('Doomsday returns the 7 other movies, each once, every movie after its prerequisites', () => {
@@ -67,7 +125,9 @@ describe('Feature 1: Rewatch Order & Cycle Detection Service', () => {
 
       const titles = result.order.map((m) => m.title);
       const ironManIdx = titles.indexOf('Iron Man');
-      const firstAvengerIdx = titles.indexOf('Captain America: The First Avenger');
+      const firstAvengerIdx = titles.indexOf(
+        'Captain America: The First Avenger'
+      );
       const theAvengersIdx = titles.indexOf('The Avengers');
 
       assert.ok(ironManIdx !== -1);
@@ -75,9 +135,19 @@ describe('Feature 1: Rewatch Order & Cycle Detection Service', () => {
       assert.ok(theAvengersIdx !== -1);
 
       // Iron Man and First Avenger must be before The Avengers
-      assert.ok(ironManIdx < theAvengersIdx, 'Iron Man must appear before The Avengers');
-      assert.ok(firstAvengerIdx < theAvengersIdx, 'First Avenger must appear before The Avengers');
-      assert.equal(theAvengersIdx, 2, 'The Avengers must be the final prerequisite before Civil War');
+      assert.ok(
+        ironManIdx < theAvengersIdx,
+        'Iron Man must appear before The Avengers'
+      );
+      assert.ok(
+        firstAvengerIdx < theAvengersIdx,
+        'First Avenger must appear before The Avengers'
+      );
+      assert.equal(
+        theAvengersIdx,
+        2,
+        'The Avengers must be the final prerequisite before Civil War'
+      );
     });
 
     it('Thor: Ragnarok returns an empty list', () => {
@@ -133,10 +203,34 @@ describe('Feature 1: Rewatch Order & Cycle Detection Service', () => {
       // Movie D depends on Movie B and Movie C
       // Both Movie B and Movie C depend on Movie A
       const diamondData = [
-        { _id: 'A', title: 'Movie A', runtime: 100, watched: false, prerequisites: [] },
-        { _id: 'B', title: 'Movie B', runtime: 110, watched: false, prerequisites: ['A'] },
-        { _id: 'C', title: 'Movie C', runtime: 120, watched: false, prerequisites: ['A'] },
-        { _id: 'D', title: 'Movie D', runtime: 130, watched: false, prerequisites: ['B', 'C'] },
+        {
+          _id: 'A',
+          title: 'Movie A',
+          runtime: 100,
+          watched: false,
+          prerequisites: [],
+        },
+        {
+          _id: 'B',
+          title: 'Movie B',
+          runtime: 110,
+          watched: false,
+          prerequisites: ['A'],
+        },
+        {
+          _id: 'C',
+          title: 'Movie C',
+          runtime: 120,
+          watched: false,
+          prerequisites: ['A'],
+        },
+        {
+          _id: 'D',
+          title: 'Movie D',
+          runtime: 130,
+          watched: false,
+          prerequisites: ['B', 'C'],
+        },
       ];
       const diamondMap = new Map(diamondData.map((m) => [m._id, m]));
 

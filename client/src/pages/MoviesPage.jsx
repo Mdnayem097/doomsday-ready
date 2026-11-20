@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { getMovies, createMovie, updateMovie } from '../api.js';
 import ErrorMessage from '../components/ErrorMessage.jsx';
 
@@ -75,7 +75,9 @@ export default function MoviesPage() {
     const updatedWatched = !movie.watched;
     // Optimistic UI update
     setMovies((prev) =>
-      prev.map((m) => (m._id === movie._id ? { ...m, watched: updatedWatched } : m))
+      prev.map((m) =>
+        m._id === movie._id ? { ...m, watched: updatedWatched } : m
+      )
     );
 
     try {
@@ -83,7 +85,9 @@ export default function MoviesPage() {
     } catch (err) {
       // Revert if error
       setMovies((prev) =>
-        prev.map((m) => (m._id === movie._id ? { ...m, watched: movie.watched } : m))
+        prev.map((m) =>
+          m._id === movie._id ? { ...m, watched: movie.watched } : m
+        )
       );
       setFetchError(err);
     }
@@ -322,7 +326,10 @@ export default function MoviesPage() {
               Select the movies that must be watched before this one.
             </p>
 
-            <ErrorMessage error={editError} onClose={() => setEditError(null)} />
+            <ErrorMessage
+              error={editError}
+              onClose={() => setEditError(null)}
+            />
 
             <div className="modal-checklist">
               {movies

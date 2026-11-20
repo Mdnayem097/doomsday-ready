@@ -229,8 +229,8 @@
   gap: 1rem;
 }
 
-input[type="text"],
-input[type="number"],
+input[type='text'],
+input[type='number'],
 select {
   background-color: var(--bg-input);
   border: 1px solid var(--border-color);
@@ -241,8 +241,8 @@ select {
   transition: border-color 0.15s ease;
 }
 
-input[type="text"]:focus,
-input[type="number"]:focus,
+input[type='text']:focus,
+input[type='number']:focus,
 select:focus {
   border-color: var(--accent-primary);
 }
@@ -326,7 +326,7 @@ select:focus {
   font-size: 1rem;
 }
 
-.checkbox-label input[type="checkbox"] {
+.checkbox-label input[type='checkbox'] {
   width: 1.15rem;
   height: 1.15rem;
   accent-color: var(--accent-success);
@@ -590,7 +590,7 @@ select:focus {
   gap: 0.4rem;
 }
 
-.checkbox-pill input[type="checkbox"] {
+.checkbox-pill input[type='checkbox'] {
   accent-color: var(--accent-success);
   cursor: pointer;
   width: 1.1rem;
@@ -864,7 +864,7 @@ select:focus {
   background-color: var(--bg-card-hover);
 }
 
-.checklist-item input[type="checkbox"] {
+.checklist-item input[type='checkbox'] {
   accent-color: var(--accent-primary);
   width: 1.1rem;
   height: 1.1rem;

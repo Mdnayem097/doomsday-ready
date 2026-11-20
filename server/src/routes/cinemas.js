@@ -7,9 +7,7 @@ import {
 
 const router = express.Router();
 
-router.route('/')
-  .post(createCinema)
-  .get(getCinemas);
+router.route('/').post(createCinema).get(getCinemas);
 
 router.get('/:id/booking', getBookingQuote);
 

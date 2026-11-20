@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { getCinemas, getBookingQuote, createCinema } from '../api.js';
 import ErrorMessage from '../components/ErrorMessage.jsx';
 
@@ -37,6 +37,7 @@ export default function BookingPage() {
 
   useEffect(() => {
     fetchCinemasList();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Request booking quote
@@ -68,6 +69,7 @@ export default function BookingPage() {
     if (selectedCinemaId && groupSize > 0) {
       handleGetQuote();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCinemaId]);
 
   // Create Cinema Handler
@@ -113,7 +115,8 @@ export default function BookingPage() {
       <div className="page-header">
         <h1 className="page-title">Cinema Group Booking</h1>
         <p className="page-subtitle">
-          Find the minimum bundle combination for any group size using optimal dynamic programming.
+          Find the minimum bundle combination for any group size using optimal
+          dynamic programming.
         </p>
       </div>
 
@@ -183,7 +186,9 @@ export default function BookingPage() {
               className="btn btn-primary"
               disabled={loadingQuote || !selectedCinemaId}
             >
-              {loadingQuote ? 'Calculating Quote...' : 'Calculate Optimal Bundles'}
+              {loadingQuote
+                ? 'Calculating Quote...'
+                : 'Calculate Optimal Bundles'}
             </button>
           </form>
         </div>
@@ -193,7 +198,9 @@ export default function BookingPage() {
           <h2 className="card-title">Optimal Quote</h2>
 
           {loadingQuote ? (
-            <div className="loading-state">Finding best bundle combination...</div>
+            <div className="loading-state">
+              Finding best bundle combination...
+            </div>
           ) : !quote ? (
             <div className="empty-state">
               Select a cinema and enter group size to view optimal bundles.
@@ -212,7 +219,8 @@ export default function BookingPage() {
                     {formatBundleString(quote.bundles, quote.totalBundles)}
                   </span>
                   <span className="summary-subtext">
-                    Exactly covers {groupSize} seats with minimum bundle purchase.
+                    Exactly covers {groupSize} seats with minimum bundle
+                    purchase.
                   </span>
                 </div>
               </div>
@@ -245,7 +253,8 @@ export default function BookingPage() {
               <h3 className="impossible-title">Not Possible</h3>
               <p className="impossible-desc">{quote.message}</p>
               <div className="impossible-tip">
-                Tip: Group size cannot be formed exactly with the cinema&apos;s available bundle sizes. Try a different group size or cinema.
+                Tip: Group size cannot be formed exactly with the cinema&apos;s
+                available bundle sizes. Try a different group size or cinema.
               </div>
             </div>
           )}
@@ -257,7 +266,10 @@ export default function BookingPage() {
         <div className="modal-backdrop">
           <div className="modal-card">
             <h3 className="modal-title">Add New Cinema</h3>
-            <ErrorMessage error={newCinemaError} onClose={() => setNewCinemaError(null)} />
+            <ErrorMessage
+              error={newCinemaError}
+              onClose={() => setNewCinemaError(null)}
+            />
 
             <form onSubmit={handleCreateCinema} className="modal-form">
               <div className="form-group">
@@ -285,7 +297,8 @@ export default function BookingPage() {
                   onChange={(e) => setNewCinemaSizes(e.target.value)}
                 />
                 <small className="help-text">
-                  Enter 1 to 10 unique integers (e.g. &ldquo;2, 5&rdquo; or &ldquo;6, 9, 20&rdquo;)
+                  Enter 1 to 10 unique integers (e.g. &ldquo;2, 5&rdquo; or
+                  &ldquo;6, 9, 20&rdquo;)
                 </small>
               </div>
 

@@ -1,4 +1,10 @@
 import mongoose from 'mongoose';
+import {
+  MIN_BUNDLE_SIZE,
+  MAX_BUNDLE_SIZE,
+  MIN_BUNDLE_COUNT,
+  MAX_BUNDLE_COUNT,
+} from '../config/constants.js';
 
 const cinemaSchema = new mongoose.Schema(
   {
@@ -14,15 +20,24 @@ const cinemaSchema = new mongoose.Schema(
       validate: [
         {
           validator: function (val) {
-            return Array.isArray(val) && val.length >= 1 && val.length <= 10;
+            return (
+              Array.isArray(val) &&
+              val.length >= MIN_BUNDLE_COUNT &&
+              val.length <= MAX_BUNDLE_COUNT
+            );
           },
-          message: 'Bundle sizes must contain between 1 and 10 items',
+          message: `Bundle sizes must contain between ${MIN_BUNDLE_COUNT} and ${MAX_BUNDLE_COUNT} items`,
         },
         {
           validator: function (val) {
-            return val.every((num) => Number.isInteger(num) && num >= 1 && num <= 500);
+            return val.every(
+              (num) =>
+                Number.isInteger(num) &&
+                num >= MIN_BUNDLE_SIZE &&
+                num <= MAX_BUNDLE_SIZE
+            );
           },
-          message: 'Each bundle size must be an integer between 1 and 500',
+          message: `Each bundle size must be an integer between ${MIN_BUNDLE_SIZE} and ${MAX_BUNDLE_SIZE}`,
         },
         {
           validator: function (val) {

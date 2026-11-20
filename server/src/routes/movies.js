@@ -8,12 +8,9 @@ import {
 
 const router = express.Router();
 
-router.route('/')
-  .post(createMovie)
-  .get(getMovies);
+router.route('/').post(createMovie).get(getMovies);
 
-router.route('/:id')
-  .patch(updateMovie);
+router.route('/:id').patch(updateMovie);
 
 router.get('/:id/rewatch-order', getMovieRewatchOrder);
 

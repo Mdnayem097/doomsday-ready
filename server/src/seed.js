@@ -71,7 +71,7 @@ export async function seed() {
     prerequisites: [infinityWar._id],
   });
 
-  const doomsday = await Movie.create({
+  await Movie.create({
     title: 'Avengers: Doomsday',
     releaseYear: 2026,
     runtime: 180,

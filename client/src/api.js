@@ -68,5 +68,7 @@ export async function createCinema(cinemaData) {
 }
 
 export async function getBookingQuote(cinemaId, groupSize) {
-  return request(`/cinemas/${cinemaId}/booking?groupSize=${encodeURIComponent(groupSize)}`);
+  return request(
+    `/cinemas/${cinemaId}/booking?groupSize=${encodeURIComponent(groupSize)}`
+  );
 }

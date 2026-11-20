@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { getMovies, getRewatchOrder, updateMovie } from '../api.js';
 import ErrorMessage from '../components/ErrorMessage.jsx';
 import ProgressBar from '../components/ProgressBar.jsx';
@@ -104,7 +104,8 @@ export default function RewatchPlanPage() {
       <div className="page-header">
         <h1 className="page-title">Rewatch Order Plan</h1>
         <p className="page-subtitle">
-          Calculate the optimal prerequisite order to prepare for your target movie.
+          Calculate the optimal prerequisite order to prepare for your target
+          movie.
         </p>
       </div>
 
@@ -130,7 +131,9 @@ export default function RewatchPlanPage() {
       </div>
 
       {loadingPlan ? (
-        <div className="card loading-state">Calculating rewatch sequence...</div>
+        <div className="card loading-state">
+          Calculating rewatch sequence...
+        </div>
       ) : rewatchData ? (
         <div className="plan-results">
           {/* Summary / Progress Card */}
@@ -139,7 +142,8 @@ export default function RewatchPlanPage() {
               <div>
                 <span className="summary-eyebrow">Target Goal</span>
                 <h2 className="summary-target-title">
-                  {rewatchData.target?.title} ({rewatchData.target?.releaseYear})
+                  {rewatchData.target?.title} ({rewatchData.target?.releaseYear}
+                  )
                 </h2>
               </div>
               <div className="remaining-time-badge">
