@@ -1,0 +1,12 @@
+{
+  "name": "doomsday-ready",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "npm --prefix server test",
+    "lint": "npm --prefix server run lint && npm --prefix client run lint",
+    "format": "npm --prefix server run format && npm --prefix client run format",
+    "seed": "npm --prefix server run seed"
+  }
+}
