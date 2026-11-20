@@ -7,7 +7,7 @@ import { runSeed } from './seed.js';
 
 const app = express();
 
-// Parse CLIENT_URL from environment (supports comma-separated URLs)
+// Parse CLIENT_URL from environment (supports comma-separated URLs or '*')
 const rawClientUrl = process.env.CLIENT_URL || '';
 const configuredOrigins = rawClientUrl
   .split(',')
@@ -17,7 +17,9 @@ const configuredOrigins = rawClientUrl
 // CORS configuration:
 // - Always allows server-to-server or headless requests without origin (health checks, curl, Postman)
 // - In development (NODE_ENV !== 'production'), always permits localhost ports
-// - In production, allows configured CLIENT_URL origin(s)
+// - If CLIENT_URL is '*' or not set, permits all origins
+// - Automatically permits any Vercel domain (*.vercel.app)
+// - Permits explicitly configured CLIENT_URL origins
 const corsOptions = {
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
@@ -32,18 +34,30 @@ const corsOptions = {
     }
 
     const normalizedOrigin = origin.replace(/\/+$/, '');
-    if (configuredOrigins.includes(normalizedOrigin)) {
+
+    // Allow all if CLIENT_URL is not set or set to '*'
+    if (configuredOrigins.length === 0 || configuredOrigins.includes('*')) {
       return callback(null, true);
     }
 
-    // Fallback: if no CLIENT_URL set and running in development, permit all
-    if (configuredOrigins.length === 0 && isDev) {
+    // Automatically permit any Vercel deployment (production or preview)
+    if (
+      normalizedOrigin.endsWith('.vercel.app') ||
+      normalizedOrigin.includes('vercel.app')
+    ) {
+      return callback(null, true);
+    }
+
+    // Match explicitly configured origins
+    if (configuredOrigins.includes(normalizedOrigin)) {
       return callback(null, true);
     }
 
     return callback(new Error(`Not allowed by CORS: ${origin}`));
   },
   credentials: true,
+  methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Seed-Secret'],
 };
 
 app.use(cors(corsOptions));

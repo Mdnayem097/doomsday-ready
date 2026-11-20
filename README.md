@@ -13,9 +13,9 @@
 
 | Service | Component | URL |
 | :--- | :--- | :--- |
-| **Frontend Client** | Vercel SPA | [https://doomsday-ready-client.vercel.app](https://doomsday-ready-client.vercel.app) *(Placeholder)* |
-| **Backend API** | Render Web Service | [https://doomsday-ready-server.onrender.com](https://doomsday-ready-server.onrender.com) *(Placeholder)* |
-| **Health Check** | Render Health Check | [https://doomsday-ready-server.onrender.com/api/health](https://doomsday-ready-server.onrender.com/api/health) |
+| **Frontend Client** | Vercel SPA | [https://doomsday-ready-ivory.vercel.app](https://doomsday-ready-ivory.vercel.app) |
+| **Backend API** | Render Web Service | [https://doomsday-ready-uepf.onrender.com](https://doomsday-ready-uepf.onrender.com) |
+| **Health Check** | Render Health Check | [https://doomsday-ready-uepf.onrender.com/api/health](https://doomsday-ready-uepf.onrender.com/api/health) |
 
 ---
 
