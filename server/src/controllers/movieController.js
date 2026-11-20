@@ -4,6 +4,11 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import { AppError } from '../utils/AppError.js';
 import { detectCycle, getRewatchOrder } from '../services/rewatchOrder.js';
 
+// Helper to escape regex special characters
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 /**
  * Loads all movies and stores them in a Map by their string ID.
  */
@@ -20,24 +25,49 @@ async function loadMovieMap() {
 export const createMovie = asyncHandler(async (req, res) => {
   const { title, releaseYear, runtime, prerequisites = [], watched } = req.body;
 
-  const movie = new Movie({ title, releaseYear, runtime, prerequisites, watched });
+  // Case-insensitive uniqueness check for title
+  if (typeof title === 'string' && title.trim()) {
+    const existing = await Movie.findOne({
+      title: { $regex: new RegExp(`^${escapeRegex(title.trim())}$`, 'i') },
+    });
+    if (existing) {
+      throw new AppError(409, 'DUPLICATE', 'Movie with this title already exists');
+    }
+  }
 
-  if (Array.isArray(prerequisites) && prerequisites.length > 0) {
+  // Remove duplicate IDs from prerequisites array
+  const cleanPrerequisites = Array.isArray(prerequisites)
+    ? [...new Set(prerequisites.map((p) => p.toString()))]
+    : [];
+
+  const movie = new Movie({
+    title,
+    releaseYear,
+    runtime,
+    prerequisites: cleanPrerequisites,
+    watched,
+  });
+
+  if (cleanPrerequisites.length > 0) {
+    // Check self-dependency
+    if (cleanPrerequisites.includes(movie._id.toString())) {
+      throw new AppError(409, 'CIRCULAR_DEPENDENCY', 'Movie cannot depend on itself');
+    }
+
     const movieMap = await loadMovieMap();
 
-    // Verify all prerequisite IDs are valid ObjectIds and exist
-    for (const prereqId of prerequisites) {
-      const idStr = prereqId.toString();
-      if (!mongoose.Types.ObjectId.isValid(idStr)) {
-        throw new AppError(400, 'INVALID_ID', 'Invalid id');
+    // Verify all prerequisite IDs are valid ObjectIds and exist in DB
+    for (const prereqId of cleanPrerequisites) {
+      if (!mongoose.Types.ObjectId.isValid(prereqId)) {
+        throw new AppError(400, 'INVALID_ID', `Invalid prerequisite id: ${prereqId}`);
       }
-      if (!movieMap.has(idStr)) {
-        throw new AppError(400, 'INVALID_PREREQUISITES', `Prerequisite movie ${idStr} does not exist`);
+      if (!movieMap.has(prereqId)) {
+        throw new AppError(400, 'INVALID_PREREQUISITES', `Prerequisite movie ${prereqId} does not exist`);
       }
     }
 
     // Verify no circular dependency
-    if (detectCycle(movie._id, prerequisites, movieMap)) {
+    if (detectCycle(movie._id, cleanPrerequisites, movieMap)) {
       throw new AppError(409, 'CIRCULAR_DEPENDENCY', 'Movie cannot depend on itself directly or indirectly');
     }
   }
@@ -63,38 +93,64 @@ export const updateMovie = asyncHandler(async (req, res) => {
     throw new AppError(404, 'NOT_FOUND', 'Movie not found');
   }
 
+  // Check title uniqueness (case-insensitive) if title is being updated
+  if (req.body.title !== undefined) {
+    const trimmedTitle = typeof req.body.title === 'string' ? req.body.title.trim() : '';
+    if (!trimmedTitle) {
+      throw new AppError(400, 'VALIDATION_ERROR', 'Title cannot be empty');
+    }
+
+    const duplicate = await Movie.findOne({
+      title: { $regex: new RegExp(`^${escapeRegex(trimmedTitle)}$`, 'i') },
+      _id: { $ne: movie._id },
+    });
+
+    if (duplicate) {
+      throw new AppError(409, 'DUPLICATE', 'Movie with this title already exists');
+    }
+
+    movie.title = trimmedTitle;
+  }
+
   // Handle prerequisites update if provided
   if (req.body.prerequisites !== undefined) {
-    const prerequisites = req.body.prerequisites;
-    if (!Array.isArray(prerequisites)) {
+    const rawPrereqs = req.body.prerequisites;
+    if (!Array.isArray(rawPrereqs)) {
       throw new AppError(400, 'VALIDATION_ERROR', 'Prerequisites must be an array');
     }
 
-    if (prerequisites.length > 0) {
+    // Remove duplicate IDs from prerequisites array
+    const cleanPrerequisites = [...new Set(rawPrereqs.map((p) => p.toString()))];
+
+    // Check self-dependency
+    if (cleanPrerequisites.includes(movie._id.toString())) {
+      throw new AppError(409, 'CIRCULAR_DEPENDENCY', 'Movie cannot depend on itself');
+    }
+
+    if (cleanPrerequisites.length > 0) {
       const movieMap = await loadMovieMap();
 
-      // Verify all prerequisite IDs are valid ObjectIds and exist
-      for (const prereqId of prerequisites) {
-        const idStr = prereqId.toString();
-        if (!mongoose.Types.ObjectId.isValid(idStr)) {
-          throw new AppError(400, 'INVALID_ID', 'Invalid id');
+      // Verify all prerequisite IDs are valid ObjectIds and exist in DB
+      for (const prereqId of cleanPrerequisites) {
+        if (!mongoose.Types.ObjectId.isValid(prereqId)) {
+          throw new AppError(400, 'INVALID_ID', `Invalid prerequisite id: ${prereqId}`);
         }
-        if (!movieMap.has(idStr)) {
-          throw new AppError(400, 'INVALID_PREREQUISITES', `Prerequisite movie ${idStr} does not exist`);
+        if (!movieMap.has(prereqId)) {
+          throw new AppError(400, 'INVALID_PREREQUISITES', `Prerequisite movie ${prereqId} does not exist`);
         }
       }
 
       // Verify no circular dependency
-      if (detectCycle(movie._id, prerequisites, movieMap)) {
+      if (detectCycle(movie._id, cleanPrerequisites, movieMap)) {
         throw new AppError(409, 'CIRCULAR_DEPENDENCY', 'Movie cannot depend on itself directly or indirectly');
       }
     }
 
-    movie.prerequisites = prerequisites;
+    movie.prerequisites = cleanPrerequisites;
   }
 
-  // Only update strictly allowed fields
-  const allowedFields = ['title', 'releaseYear', 'runtime', 'watched'];
+  // Only update strictly allowed scalar fields
+  const allowedFields = ['releaseYear', 'runtime', 'watched'];
   for (const field of allowedFields) {
     if (req.body[field] !== undefined) {
       movie[field] = req.body[field];
@@ -112,6 +168,10 @@ export const getMovieRewatchOrder = asyncHandler(async (req, res) => {
   }
 
   const movieMap = await loadMovieMap();
+  if (!movieMap.has(req.params.id)) {
+    throw new AppError(404, 'NOT_FOUND', 'Movie not found');
+  }
+
   const result = getRewatchOrder(req.params.id, movieMap);
   res.json(result);
 });

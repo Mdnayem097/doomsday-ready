@@ -25,6 +25,18 @@ describe('Rewatch Order Service (Graph / DFS Logic)', () => {
       assert.equal(hasCycle, true);
     });
 
+    it('detects indirect cycle in A -> B -> C when C is made a prerequisite of A', () => {
+      // Chain: A (10) -> B (20) -> C (30)
+      const chainMap = new Map([
+        ['10', ['20']],
+        ['20', ['30']],
+        ['30', []],
+      ]);
+      // Making A a prerequisite of C completes the cycle A -> B -> C -> A
+      const hasCycle = detectCycle('30', ['10'], chainMap);
+      assert.equal(hasCycle, true);
+    });
+
     it('detects direct self-cycle when movie depends on itself', () => {
       const hasCycle = detectCycle('1', ['1'], prereqMap);
       assert.equal(hasCycle, true);
@@ -64,6 +76,50 @@ describe('Rewatch Order Service (Graph / DFS Logic)', () => {
       // All unwatched: sum of 126 + 124 + 143 + 147 + 130 + 149 + 181 = 1000
       assert.equal(result.remainingRuntime, 1000);
       assert.equal(result.watchedCount, 0);
+    });
+
+    it('handles diamond dependency correctly, listing shared prerequisite exactly once', () => {
+      // Diamond: D depends on B and C; both B and C depend on A
+      const diamondMovies = [
+        { _id: 'A', title: 'Movie A', runtime: 100, watched: false, prerequisites: [] },
+        { _id: 'B', title: 'Movie B', runtime: 110, watched: false, prerequisites: ['A'] },
+        { _id: 'C', title: 'Movie C', runtime: 120, watched: false, prerequisites: ['A'] },
+        { _id: 'D', title: 'Movie D', runtime: 130, watched: false, prerequisites: ['B', 'C'] },
+      ];
+      const diamondMap = new Map(diamondMovies.map((m) => [m._id, m]));
+
+      const result = getRewatchOrder('D', diamondMap);
+
+      assert.equal(result.totalCount, 3);
+      assert.equal(result.order.length, 3);
+
+      const titles = result.order.map((m) => m.title);
+      // A must appear before both B and C
+      assert.ok(titles.indexOf('Movie A') < titles.indexOf('Movie B'));
+      assert.ok(titles.indexOf('Movie A') < titles.indexOf('Movie C'));
+
+      // Every movie in diamond appears exactly once
+      const uniqueTitles = new Set(titles);
+      assert.equal(uniqueTitles.size, 3);
+      assert.ok(uniqueTitles.has('Movie A'));
+      assert.ok(uniqueTitles.has('Movie B'));
+      assert.ok(uniqueTitles.has('Movie C'));
+      assert.ok(!uniqueTitles.has('Movie D')); // Target excluded
+    });
+
+    it('remainingRuntime never includes target runtime even when target is unwatched', () => {
+      // All prerequisites watched, target movie unwatched
+      const testMap = new Map([
+        ['A', { _id: 'A', title: 'Movie A', runtime: 100, watched: true, prerequisites: [] }],
+        ['B', { _id: 'B', title: 'Movie B', runtime: 120, watched: true, prerequisites: ['A'] }],
+        ['Target', { _id: 'Target', title: 'Target Movie', runtime: 200, watched: false, prerequisites: ['B'] }],
+      ]);
+
+      const result = getRewatchOrder('Target', testMap);
+      assert.equal(result.totalCount, 2);
+      assert.equal(result.watchedCount, 2);
+      // remainingRuntime MUST be 0 (Target's 200 is never counted)
+      assert.equal(result.remainingRuntime, 0);
     });
 
     it('returns Iron Man and First Avenger before The Avengers for Civil War', () => {
