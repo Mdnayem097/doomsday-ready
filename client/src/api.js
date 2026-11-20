@@ -1,4 +1,12 @@
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const rawApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+// Trim trailing slashes
+const cleanApiUrl = rawApiUrl.replace(/\/+$/, '');
+
+// Ensure /api path suffix is present
+const API_BASE = cleanApiUrl.endsWith('/api')
+  ? cleanApiUrl
+  : `${cleanApiUrl}/api`;
 
 /**
  * Common fetch helper that automatically handles JSON serialization

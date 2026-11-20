@@ -2,8 +2,20 @@
 
 > A full-stack MERN application to plan an MCU rewatch before *Avengers: Doomsday* and optimize group ticket bookings across cinema chains.
 
-[![Live Demo](https://img.shields.io/badge/demo-online-brightgreen.svg)](#)  
-🔗 **Live Demo:** [https://doomsday-ready.demo.com](https://doomsday-ready.demo.com) *(Demo link placeholder)*
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Node.js](https://img.shields.io/badge/Node.js-v20+-green.svg)](https://nodejs.org/)
+[![React](https://img.shields.io/badge/React-19-61dafb.svg)](https://react.dev/)
+[![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
+
+---
+
+## Live Demo
+
+| Service | Component | URL |
+| :--- | :--- | :--- |
+| **Frontend Client** | Vercel SPA | [https://doomsday-ready-client.vercel.app](https://doomsday-ready-client.vercel.app) *(Placeholder)* |
+| **Backend API** | Render Web Service | [https://doomsday-ready-server.onrender.com](https://doomsday-ready-server.onrender.com) *(Placeholder)* |
+| **Health Check** | Render Health Check | [https://doomsday-ready-server.onrender.com/api/health](https://doomsday-ready-server.onrender.com/api/health) |
 
 ---
 
@@ -11,9 +23,15 @@
 - [Overview](#overview)
 - [Features](#features)
 - [Tech Stack](#tech-stack)
+- [Live Demo](#live-demo)
 - [Quick Start](#quick-start)
   - [Docker (Recommended)](#docker-recommended)
   - [Local Setup (Without Docker)](#local-setup-without-docker)
+- [Deployment Guide](#deployment-guide-atlas-render--vercel)
+  - [1. Database: MongoDB Atlas](#1-database-mongodb-atlas)
+  - [2. Backend: Render](#2-backend-render)
+  - [3. Frontend: Vercel](#3-frontend-vercel)
+  - [4. One-Time Seeding on Deployed DB](#4-one-time-seeding-on-deployed-database)
 - [Project Structure](#project-structure)
 - [API Reference & Examples](#api-reference--examples)
 - [Database Schema](#database-schema)
@@ -51,6 +69,7 @@ Ahead of *Avengers: Doomsday*, watching all essential Marvel movies in the right
 - **Movies View (`/`)**: Form to add new movies, grid of collection cards, one-click watched status toggle, and an edit prerequisites modal.
 - **Rewatch Plan View (`/rewatch`)**: Target movie selector, visual progress bar, remaining watch time counter, and an interactive checklist.
 - **Cinema Booking View (`/booking`)**: Cinema venue selector, group size input, visual bundle breakdown, and receipt cards.
+- **Zero-Dependency UI**: Built with plain responsive CSS supporting ultra-compact screens down to 360px width.
 
 ---
 
@@ -60,9 +79,9 @@ Ahead of *Avengers: Doomsday*, watching all essential Marvel movies in the right
 | :--- | :--- |
 | **Backend** | Node.js (ES Modules), Express.js, Mongoose 8 |
 | **Frontend** | React 19, React Router 7, Vite, Vanilla CSS |
-| **Database** | MongoDB 7.0 |
+| **Database** | MongoDB 7.0 / MongoDB Atlas |
 | **Testing** | Node.js native test runner (`node:test`, `node:assert`) |
-| **DevOps** | Docker, Docker Compose, Nginx (Alpine) |
+| **DevOps** | Docker, Docker Compose, Nginx (Alpine), Render, Vercel |
 | **Code Quality** | ESLint 10 (Flat config), Prettier |
 
 ---
@@ -106,7 +125,7 @@ npm install
 
 # Configure environment variables
 cp .env.example .env
-# Ensure PORT=5000 and MONGO_URI are set in .env
+# Set PORT=5000 and MONGO_URI in .env
 
 # Populate the database with 8 MCU movies and 4 cinema venues
 npm run seed
@@ -123,10 +142,91 @@ npm run dev
 cd client
 npm install
 
+# Configure environment variables
+cp .env.example .env
+# Ensure VITE_API_URL=http://localhost:5000/api in .env
+
 # Start Vite development server
 npm run dev
 ```
 Open [http://localhost:5173](http://localhost:5173) in your browser.
+
+---
+
+## Deployment Guide (Atlas, Render & Vercel)
+
+### 1. Database: MongoDB Atlas
+
+1. Log in to [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) and create a free **M0 Sandbox Cluster**.
+2. Under **Security > Database Access**, create a user with read/write privileges (e.g. `doomsdayUser` and a strong password).
+3. Under **Security > Network Access**, click **Add IP Address** and choose **Allow Access from Anywhere** (`0.0.0.0/0`) so Render can reach the cluster.
+4. Under **Database > Clusters**, click **Connect > Drivers (Node.js)** and copy your connection string:
+   ```text
+   mongodb+srv://<username>:<password>@cluster0.xxx.mongodb.net/doomsday-ready?retryWrites=true&w=majority
+   ```
+
+---
+
+### 2. Backend: Render
+
+1. Log in to [Render](https://render.com) and create a **New Web Service**.
+2. Connect your GitHub repository (`doomsday-ready`).
+3. Set the service settings:
+   - **Name**: `doomsday-ready-server`
+   - **Root Directory**: `server`
+   - **Runtime**: `Node`
+   - **Build Command**: `npm install`
+   - **Start Command**: `npm start`
+   - **Plan**: `Free`
+   - **Health Check Path**: `/api/health`
+4. Add the following **Environment Variables**:
+
+| Variable | Value | Description |
+| :--- | :--- | :--- |
+| `NODE_ENV` | `production` | Enables production mode |
+| `PORT` | `10000` | Render standard port (or dynamically set) |
+| `MONGO_URI` | `mongodb+srv://<user>:<password>@.../doomsday-ready?retryWrites=true&w=majority` | Your Atlas connection string |
+| `CLIENT_URL` | `https://doomsday-ready-client.vercel.app` | Your deployed Vercel frontend URL |
+| `ALLOW_SEED` | `true` | *(Optional)* Enables one-time seed via `POST /api/seed` |
+
+---
+
+### 3. Frontend: Vercel
+
+1. Log in to [Vercel](https://vercel.com) and click **Add New > Project**.
+2. Import your GitHub repository (`doomsday-ready`).
+3. Set the project configuration:
+   - **Framework Preset**: `Vite`
+   - **Root Directory**: Click edit and select `client`
+   - **Build Command**: `npm run build`
+   - **Output Directory**: `dist`
+4. Add the **Environment Variable**:
+
+| Variable | Value | Description |
+| :--- | :--- | :--- |
+| `VITE_API_URL` | `https://doomsday-ready-server.onrender.com/api` | Your deployed Render backend API URL |
+
+5. Click **Deploy**. Vercel will build the frontend. Single-page navigation on page refresh is automatically preserved by `client/vercel.json`.
+
+---
+
+### 4. One-Time Seeding on Deployed Database
+
+Choose either option below to populate your deployed MongoDB Atlas database with the 8 MCU movies and 4 cinema venues:
+
+#### Option A: Run from your local terminal (Recommended)
+You can point the seed script directly to your remote Atlas connection string:
+```bash
+cd server
+npm run seed -- "mongodb+srv://<username>:<password>@cluster0.xxx.mongodb.net/doomsday-ready?retryWrites=true&w=majority"
+```
+
+#### Option B: Via HTTP endpoint on Render
+If you configured `ALLOW_SEED=true` in Render environment variables:
+```bash
+curl -X POST https://doomsday-ready-server.onrender.com/api/seed
+```
+*Note: Once seeded, you can remove `ALLOW_SEED` from Render's environment variables to prevent accidental resets.*
 
 ---
 
@@ -135,28 +235,34 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 ```
 doomsday-ready/
 ├── client/                          # React + Vite frontend SPA
-│   ├── public/                      # Static assets & favicon
+│   ├── public/
+│   │   ├── _redirects               # Netlify SPA fallback routing
+│   │   └── favicon.svg
 │   ├── src/
 │   │   ├── components/              # Reusable UI components
-│   │   │   ├── ErrorMessage.jsx     # Dismissible error banner
-│   │   │   ├── Navbar.jsx           # Top navigation bar
-│   │   │   └── ProgressBar.jsx      # Watched progress indicator
+│   │   │   ├── ErrorMessage.jsx     # Friendly backend error badge & banner
+│   │   │   ├── LoadingSpinner.jsx   # Pure CSS loading spinner
+│   │   │   ├── Navbar.jsx           # Top navigation bar with active state
+│   │   │   ├── ProgressBar.jsx      # Watched progress indicator
+│   │   │   └── SuccessMessage.jsx   # Auto-dismissing success alert
 │   │   ├── pages/                   # Application views
 │   │   │   ├── BookingPage.jsx      # Cinema booking quote view
 │   │   │   ├── MoviesPage.jsx       # Movie list & creation view
 │   │   │   └── RewatchPlanPage.jsx  # Topological rewatch planner view
 │   │   ├── api.js                   # Centralized API fetch client
-│   │   ├── App.css                  # Responsive dark-theme styling
+│   │   ├── App.css                  # Responsive dark-theme styling (down to 360px)
 │   │   ├── App.jsx                  # React Router configuration
 │   │   ├── index.css                # Global CSS variables & reset
 │   │   └── main.jsx                 # Client entry point
 │   ├── .dockerignore
-│   ├── .env                         # VITE_API_URL configuration
+│   ├── .env.example                 # VITE_API_URL template
 │   ├── .prettierrc
 │   ├── Dockerfile                   # Multi-stage Vite + Nginx build
 │   ├── eslint.config.js
 │   ├── index.html
 │   ├── nginx.conf                   # Nginx config with /api reverse proxy
+│   ├── package.json
+│   ├── vercel.json                  # Vercel SPA rewrite configuration
 │   └── vite.config.js
 ├── server/                          # Express.js REST API
 │   ├── src/
@@ -166,7 +272,7 @@ doomsday-ready/
 │   │   ├── controllers/             # Slim HTTP request/response handlers
 │   │   │   ├── cinemaController.js
 │   │   │   └── movieController.js
-│   │   ├── middleware/              # Global error handling
+│   │   ├── middleware/              # Global error & CORS handling
 │   │   │   └── errorHandler.js
 │   │   ├── models/                  # Mongoose data models
 │   │   │   ├── Cinema.js
@@ -182,14 +288,14 @@ doomsday-ready/
 │   │   ├── utils/
 │   │   │   ├── AppError.js          # Custom error class (status + code)
 │   │   │   └── asyncHandler.js      # Express async route wrapper
-│   │   ├── app.js                   # Express app setup & route mounting
-│   │   ├── seed.js                  # Database seed script
+│   │   ├── app.js                   # Express app setup, CORS, health & routes
+│   │   ├── seed.js                  # Database seed script & export
 │   │   └── server.js                # Server entry point
 │   ├── tests/                       # Unit tests (node:test)
 │   │   ├── bookingQuote.test.js
 │   │   └── rewatchOrder.test.js
 │   ├── .dockerignore
-│   ├── .env.example
+│   ├── .env.example                 # PORT, MONGO_URI, CLIENT_URL template
 │   ├── .prettierrc
 │   ├── Dockerfile                   # Node 20 Alpine production image
 │   ├── eslint.config.js
@@ -218,7 +324,8 @@ All error responses strictly follow the uniform structure:
 
 | Method | Endpoint | Description | Status Codes |
 | :--- | :--- | :--- | :--- |
-| `GET` | `/api/health` | Service health status | `200` |
+| `GET` | `/api/health` | Service health status check | `200` |
+| `POST` | `/api/seed` | One-time remote seed endpoint *(if enabled)* | `200`, `403` |
 | `GET` | `/api/movies` | List all movies | `200` |
 | `POST` | `/api/movies` | Create a new movie | `201`, `400`, `409` |
 | `PATCH` | `/api/movies/:id` | Update allowed movie fields | `200`, `400`, `404`, `409` |
@@ -231,7 +338,17 @@ All error responses strictly follow the uniform structure:
 
 ### Request & Response Examples
 
-#### 1. Create Movie (`POST /api/movies`)
+#### 1. Health Check (`GET /api/health`)
+**Response (`200 OK`):**
+```json
+{
+  "status": "ok",
+  "uptime": 124,
+  "timestamp": "2026-11-21T00:00:00.000Z"
+}
+```
+
+#### 2. Create Movie (`POST /api/movies`)
 ```http
 POST /api/movies
 Content-Type: application/json
@@ -257,7 +374,7 @@ Content-Type: application/json
 }
 ```
 
-#### 2. List Movies (`GET /api/movies`)
+#### 3. List Movies (`GET /api/movies`)
 **Response (`200 OK`):**
 ```json
 [
@@ -272,7 +389,7 @@ Content-Type: application/json
 ]
 ```
 
-#### 3. Update Movie (`PATCH /api/movies/:id`)
+#### 4. Update Movie (`PATCH /api/movies/:id`)
 ```http
 PATCH /api/movies/6b0065603e461bb282492dc6
 Content-Type: application/json
@@ -294,7 +411,7 @@ Content-Type: application/json
 }
 ```
 
-#### 4. Rewatch Order (`GET /api/movies/:id/rewatch-order`)
+#### 5. Rewatch Order (`GET /api/movies/:id/rewatch-order`)
 ```http
 GET /api/movies/6b0065603e461bb282492dd4/rewatch-order
 ```
@@ -322,7 +439,7 @@ GET /api/movies/6b0065603e461bb282492dd4/rewatch-order
 }
 ```
 
-#### 5. Circular Dependency Error (`409 CIRCULAR_DEPENDENCY`)
+#### 6. Circular Dependency Error (`409 CIRCULAR_DEPENDENCY`)
 Attempting to make *Avengers: Endgame* a prerequisite of *Iron Man*:
 ```http
 PATCH /api/movies/6b0065603e461bb282492dc6
@@ -342,7 +459,7 @@ Content-Type: application/json
 }
 ```
 
-#### 6. Create Cinema (`POST /api/cinemas`)
+#### 7. Create Cinema (`POST /api/cinemas`)
 ```http
 POST /api/cinemas
 Content-Type: application/json
@@ -363,7 +480,7 @@ Content-Type: application/json
 }
 ```
 
-#### 7. List Cinemas (`GET /api/cinemas`)
+#### 8. List Cinemas (`GET /api/cinemas`)
 **Response (`200 OK`):**
 ```json
 [
@@ -375,7 +492,7 @@ Content-Type: application/json
 ]
 ```
 
-#### 8. Booking Quote: Feasible (`GET /api/cinemas/:id/booking?groupSize=6`)
+#### 9. Booking Quote: Feasible (`GET /api/cinemas/:id/booking?groupSize=6`)
 At Stark Starkplex (bundle sizes `[1, 3, 4]`):
 ```http
 GET /api/cinemas/6b0065603e461bb282492dd6/booking?groupSize=6
@@ -394,7 +511,7 @@ GET /api/cinemas/6b0065603e461bb282492dd6/booking?groupSize=6
 }
 ```
 
-#### 9. Booking Quote: Not Possible (`GET /api/cinemas/:id/booking?groupSize=7`)
+#### 10. Booking Quote: Not Possible (`GET /api/cinemas/:id/booking?groupSize=7`)
 At Sanctum Sanctorum Cine (bundle sizes `[4, 6]`):
 ```http
 GET /api/cinemas/6b0065603e461bb282492dd9/booking?groupSize=7

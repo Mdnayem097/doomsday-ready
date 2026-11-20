@@ -18,7 +18,11 @@ export function errorHandler(err, req, res, next) {
     message = 'Something went wrong',
   } = err;
 
-  if (err.name === 'ValidationError') {
+  if (err.message && err.message.startsWith('Not allowed by CORS')) {
+    status = 403;
+    code = 'CORS_ERROR';
+    message = err.message;
+  } else if (err.name === 'ValidationError') {
     status = 400;
     code = 'VALIDATION_ERROR';
     message = Object.values(err.errors)
