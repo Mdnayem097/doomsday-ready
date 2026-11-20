@@ -1,0 +1,125 @@
+### Doomsday Ready API Requests (REST Client / Postman compatible)
+@baseUrl = http://localhost:5000/api
+
+# Seeded Movie IDs (from `npm run seed`)
+@ironManId = 6b0065603e461bb282492dc6
+@civilWarId = 6b0065603e461bb282492dce
+@ragnarokId = 6b0065603e461bb282492dca
+@endgameId = 6b0065603e461bb282492dd2
+@doomsdayId = 6b0065603e461bb282492dd4
+
+# Seeded Cinema IDs (from `npm run seed`)
+@starkCinemasId = 6b0065603e461bb282492dd6
+@shieldCinemasId = 6b0065603e461bb282492dd7
+@wakandaImaxId = 6b0065603e461bb282492dd8
+@sanctumCineId = 6b0065603e461bb282492dd9
+
+###############################################################################
+# HEALTH CHECK
+###############################################################################
+
+### Health check
+GET {{baseUrl}}/health
+
+###############################################################################
+# MOVIES ENDPOINTS
+###############################################################################
+
+### 1. List all movies
+GET {{baseUrl}}/movies
+
+### 2. Create movie (201 Created)
+POST {{baseUrl}}/movies
+Content-Type: application/json
+
+{
+  "title": "Black Panther",
+  "releaseYear": 2018,
+  "runtime": 134,
+  "prerequisites": ["{{civilWarId}}"]
+}
+
+### 3. Update movie - mark watched & update runtime (200 OK)
+PATCH {{baseUrl}}/movies/{{ironManId}}
+Content-Type: application/json
+
+{
+  "watched": true,
+  "runtime": 126
+}
+
+###############################################################################
+# REWATCH ORDER EXAMPLES (FEATURE 1)
+###############################################################################
+
+### Rewatch Example 1: Avengers: Doomsday (Expected: 7 movies in valid order)
+GET {{baseUrl}}/movies/{{doomsdayId}}/rewatch-order
+
+### Rewatch Example 2: Captain America: Civil War (Expected: Iron Man + First Avenger, then The Avengers)
+GET {{baseUrl}}/movies/{{civilWarId}}/rewatch-order
+
+### Rewatch Example 3: Thor: Ragnarok (Expected: Empty list)
+GET {{baseUrl}}/movies/{{ragnarokId}}/rewatch-order
+
+### Rewatch Example 4: Circular Dependency Detection (Expected: 409 CIRCULAR_DEPENDENCY)
+PATCH {{baseUrl}}/movies/{{ironManId}}
+Content-Type: application/json
+
+{
+  "prerequisites": ["{{endgameId}}"]
+}
+
+###############################################################################
+# CINEMAS ENDPOINTS
+###############################################################################
+
+### 1. List all cinemas
+GET {{baseUrl}}/cinemas
+
+### 2. Create cinema (201 Created)
+POST {{baseUrl}}/cinemas
+Content-Type: application/json
+
+{
+  "name": "Nova Starplex",
+  "bundleSizes": [5, 10, 25]
+}
+
+###############################################################################
+# BOOKING QUOTE EXAMPLES (FEATURE 2)
+###############################################################################
+
+### Booking Example 1: Sizes [1, 3, 4] and group 6 (Expected: 2 bundles -> 3 x 2)
+GET {{baseUrl}}/cinemas/{{starkCinemasId}}/booking?groupSize=6
+
+### Booking Example 2: Sizes [2, 5] and group 11 (Expected: 4 bundles -> 5 x 1, 2 x 3)
+GET {{baseUrl}}/cinemas/{{shieldCinemasId}}/booking?groupSize=11
+
+### Booking Example 3: Sizes [6, 9, 20] and group 44 (Expected: 4 bundles -> 20 x 1, 9 x 2, 6 x 1)
+GET {{baseUrl}}/cinemas/{{wakandaImaxId}}/booking?groupSize=44
+
+### Booking Example 4: Sizes [4, 6] and group 7 (Expected: possible: false)
+GET {{baseUrl}}/cinemas/{{sanctumCineId}}/booking?groupSize=7
+
+###############################################################################
+# ERROR & VALIDATION EXAMPLES
+###############################################################################
+
+### Error: Invalid ObjectId (Expected: 400 INVALID_ID)
+GET {{baseUrl}}/cinemas/not-a-valid-id/booking?groupSize=5
+
+### Error: Invalid Group Size (Expected: 400 INVALID_GROUP_SIZE)
+GET {{baseUrl}}/cinemas/{{starkCinemasId}}/booking?groupSize=0
+
+### Error: Duplicate Movie Title (Expected: 409 DUPLICATE)
+POST {{baseUrl}}/movies
+Content-Type: application/json
+
+{
+  "title": "Iron Man",
+  "releaseYear": 2008,
+  "runtime": 126
+}
+
+### Error: Not Found (Expected: 404 NOT_FOUND)
+GET {{baseUrl}}/movies/666666666666666666666666/rewatch-order
